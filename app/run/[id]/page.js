@@ -48,11 +48,10 @@ export default function RunPage({ params }) {
 
   if (!run) return <div style={wrap}>Loading…</div>;
 
+  const hero = assets.filter((a) => a.role === 'hero');
   const gallery = assets.filter((a) => a.role === 'gallery');
   const sections = assets.filter((a) => a.role.startsWith('section'));
-  const approvedG = gallery.filter((a) => a.approved).length;
-  const approvedS = sections.filter((a) => a.approved).length;
-  const gateReady = approvedG >= 4 && approvedS >= 3;
+  const approvedCount = assets.filter((a) => a.approved).length;
 
   return (
     <div style={wrap}>
@@ -80,11 +79,12 @@ export default function RunPage({ params }) {
 
       {run.status === 'needs_review' && (
         <>
-          <h3>Image review — approve 4 gallery + 3 section</h3>
-          <p style={{ color: '#9aa0ac' }}>Approved: {approvedG}/4 gallery, {approvedS}/3 section</p>
+          <h3>Image review — approve the images you want on the draft</h3>
+          <p style={{ color: '#9aa0ac' }}>{approvedCount} approved — only approved images are attached; you can build with any selection</p>
+          {hero.length > 0 && <ImgGrid title="Hero" items={hero} onToggle={toggle} />}
           <ImgGrid title="Gallery" items={gallery} onToggle={toggle} />
           <ImgGrid title="Sections" items={sections} onToggle={toggle} />
-          <button style={{ ...btn, marginTop: 12, opacity: gateReady ? 1 : 0.4 }} disabled={!gateReady || busy} onClick={resume}>
+          <button style={{ ...btn, marginTop: 12 }} disabled={busy} onClick={resume}>
             {busy ? 'Building draft…' : 'Approve & build Shopify draft'}
           </button>
         </>
