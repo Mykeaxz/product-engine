@@ -68,6 +68,7 @@ create table if not exists runs (
   admin_url    text,
   margin_json  jsonb,
   copy_json    jsonb,                         -- generated copy pack
+  state        jsonb default '{}'::jsonb,     -- scratch data between worker steps
   flags        text[] default '{}',
   error_step   text,
   error_detail text

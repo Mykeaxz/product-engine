@@ -1,10 +1,8 @@
-// Approve/reject/regenerate image candidates, and resume to draft once the
-// gate is satisfied (4 gallery + 3 section approved).
 import { userFromRequest } from '../../../lib/auth.js';
 import { serviceClient } from '../../../lib/supabase.js';
 import { resumeAfterImages } from '../../../lib/pipeline.js';
 
-export const maxDuration = 300;
+export const maxDuration = 120;
 
 export async function POST(req) {
   const { sb, user, error } = await userFromRequest(req);
@@ -15,20 +13,16 @@ export async function POST(req) {
     await sb.from('assets').update({ approved: body.approved }).eq('id', body.asset_id);
     return json({ ok: true });
   }
-
   if (body.action === 'resume') {
-    const { data: run } = await sb.from('runs').select('*').eq('id', body.run_id).single();
-    const { data: brand } = await sb.from('brands').select('*').eq('id', run.brand_id).single();
-    const { data: source } = await sb.from('sources').select('*').eq('id', run.source_id).single();
-    const svc = serviceClient();
+    const { data: run } = await sb.from('runs').select('id').eq('id', body.run_id).single();
+    if (!run) return json({ error: 'run not found' }, 404);
     try {
-      await resumeAfterImages(svc, { brand, source, run });
+      const r = await resumeAfterImages(serviceClient(), body.run_id);
+      return json({ ok: true, ...r });
     } catch (e) {
       return json({ error: String(e.message || e) }, 200);
     }
-    return json({ ok: true, status: 'done' });
   }
-
   return json({ error: 'unknown action' }, 400);
 }
 

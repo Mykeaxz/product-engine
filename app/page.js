@@ -37,8 +37,11 @@ export default function Dashboard() {
   }
   async function runSource(id) {
     setBusy(id);
-    await api('/api/run', { method: 'POST', body: JSON.stringify({ source_id: id }) });
-    setBusy(''); loadSources();
+    const r = await api('/api/run', { method: 'POST', body: JSON.stringify({ source_id: id }) });
+    setBusy('');
+    // Open the run page — it drives the pipeline forward by polling the worker.
+    if (r.run_id) window.location.href = `/run/${r.run_id}`;
+    else loadSources();
   }
   async function magicLink() {
     await sb().auth.signInWithOtp({ email });

@@ -3,7 +3,7 @@
 AliExpress link → fully-built Shopify **draft** product (scrape → margin → name → copy → metafields → AI images → draft), brand-agnostic and multi-account.
 
 ## What makes brands separate
-Every rule that used to be "Brand-specific" lives in the `brands` table as data (voice, palette, naming, pricing, art direction, Shopify store + token). Row Level Security scopes every row to the logged-in user, so accounts and brands never see each other's data. Content is generated on-brand for whichever brand you select.
+Every rule that used to be "Kopflo-specific" lives in the `brands` table as data (voice, palette, naming, pricing, art direction, Shopify store + token). Row Level Security scopes every row to the logged-in user, so accounts and brands never see each other's data. Content is generated on-brand for whichever brand you select.
 
 ## Setup
 1. Create a Supabase project. In the SQL editor, run `supabase/schema.sql`.

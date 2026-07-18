@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { use } from 'react';
 import { api } from '../../../lib/client.js';
 
@@ -9,15 +9,29 @@ export default function RunPage({ params }) {
   const [steps, setSteps] = useState([]);
   const [assets, setAssets] = useState([]);
   const [busy, setBusy] = useState(false);
+  const working = useRef(false);
 
   async function load() {
     const d = await api(`/api/run/${id}`);
     setRun(d.run); setSteps(d.steps || []); setAssets(d.assets || []);
+    return d.run;
   }
+
+  // Drive the pipeline forward: while status is 'running', keep calling the worker.
   useEffect(() => {
-    load();
-    const t = setInterval(load, 4000);
-    return () => clearInterval(t);
+    let stop = false;
+    async function tick() {
+      const r = await load();
+      if (stop || !r) return;
+      if (r.status === 'running' && !working.current) {
+        working.current = true;
+        try { await api('/api/worker', { method: 'POST', body: JSON.stringify({ run_id: id }) }); }
+        finally { working.current = false; }
+      }
+    }
+    tick();
+    const t = setInterval(tick, 3000);
+    return () => { stop = true; clearInterval(t); };
   }, [id]);
 
   async function toggle(a) {
@@ -43,7 +57,7 @@ export default function RunPage({ params }) {
   return (
     <div style={wrap}>
       <a href="/" style={link}>← queue</a>
-      <h1>Run {run.status === 'done' ? '✓' : run.status}</h1>
+      <h1>Run — {run.status === 'done' ? '✓ done' : run.status}{run.status === 'running' && run.current_step ? ` (${run.current_step}…)` : ''}</h1>
       {run.admin_url && <p><a href={run.admin_url} style={link} target="_blank">Open Shopify draft →</a></p>}
       {run.margin_json && (
         <div style={card}>
@@ -62,10 +76,11 @@ export default function RunPage({ params }) {
           </div>
         </div>
       ))}
+      {run.status === 'running' && <p style={{ color: '#9aa0ac' }}>Working… this page advances the run automatically, keep it open.</p>}
 
       {run.status === 'needs_review' && (
         <>
-          <h3>Image review gate — approve 4 gallery + 3 section</h3>
+          <h3>Image review — approve 4 gallery + 3 section</h3>
           <p style={{ color: '#9aa0ac' }}>Approved: {approvedG}/4 gallery, {approvedS}/3 section</p>
           <ImgGrid title="Gallery" items={gallery} onToggle={toggle} />
           <ImgGrid title="Sections" items={sections} onToggle={toggle} />
