@@ -1,6 +1,7 @@
 // Create / list / update brands. Each brand carries its own voice, palette,
 // pricing and Shopify creds — the whole basis of clean per-brand separation.
 import { userFromRequest } from '../../../lib/auth.js';
+import { shopifyClient } from '../../../lib/shopify.js';
 
 export async function GET(req) {
   const { sb, user, error } = await userFromRequest(req);
@@ -13,6 +14,18 @@ export async function POST(req) {
   const { sb, user, error } = await userFromRequest(req);
   if (error) return json({ error }, 401);
   const b = await req.json();
+
+  // Connection check: verifies store domain + token without saving anything.
+  if (b.action === 'test') {
+    try {
+      const { gql } = shopifyClient(b);
+      const data = await gql(`{ shop { name myshopifyDomain currencyCode } }`);
+      return json({ ok: true, shop: `${data.shop.name} (${data.shop.myshopifyDomain}, ${data.shop.currencyCode})` });
+    } catch (e) {
+      return json({ error: String(e.message || e) });
+    }
+  }
+
   const row = { user_id: user.id, ...sanitize(b) };
   let res;
   if (b.id) res = await sb.from('brands').update(sanitize(b)).eq('id', b.id).select().single();

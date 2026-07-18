@@ -44,6 +44,11 @@ export default function Settings() {
     if (r.error) { setMsg('Error: ' + r.error); return; }
     setMsg('Saved ✓'); setF(BLANK); load();
   }
+  async function testShopify() {
+    setMsg('Testing connection…');
+    const r = await api('/api/brands', { method: 'POST', body: JSON.stringify({ action: 'test', shopify_store: f.shopify_store, shopify_admin_token: f.shopify_admin_token }) });
+    setMsg(r.ok ? `Connected ✓ ${r.shop}` : '✗ ' + r.error);
+  }
 
   if (!session) return <div style={wrap}><a href="/" style={link}>← sign in first</a></div>;
 
@@ -64,7 +69,8 @@ export default function Settings() {
         <h3 style={{ marginTop: 0 }}>{f.id ? 'Edit brand' : 'New brand'}</h3>
         <Field label="Brand name" v={f.name} on={(v) => setF({ ...f, name: v })} />
         <Field label="Shopify store (xxx.myshopify.com)" v={f.shopify_store} on={(v) => setF({ ...f, shopify_store: v })} />
-        <Field label="Shopify Admin API token" v={f.shopify_admin_token} on={(v) => setF({ ...f, shopify_admin_token: v })} />
+        <Field label="Shopify Admin API token (shpat_…)" v={f.shopify_admin_token} on={(v) => setF({ ...f, shopify_admin_token: v })} />
+        <button style={{ ...btnGhost, marginBottom: 4 }} onClick={testShopify}>Test Shopify connection</button>
         <Field label="Vendor" v={f.vendor} on={(v) => setF({ ...f, vendor: v })} />
         <Field label="Template suffix" v={f.template_suffix} on={(v) => setF({ ...f, template_suffix: v })} />
         <Field label="Naming pattern" v={f.naming_pattern} on={(v) => setF({ ...f, naming_pattern: v })} />
